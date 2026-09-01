@@ -20,6 +20,12 @@ assert.match(script,/render\(true\)/,'animated view rendering is missing');
 assert.match(html,/\.sidebar\.open\{transform:translate3d\(0,0,0\) scale\(1\)/,'mobile sidebar flyout is missing');
 assert.match(html,/\.mobile-shade\.open\{[^}]*opacity:1/,'mobile sidebar shade transition is missing');
 assert.match(script,/function syncProductToShopping/,'comparison-to-shopping sync is missing');
+assert.match(html,/<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/,'SVG favicon link is missing');
+assert.match(html,/<link rel="icon" href="\/favicon-32x32\.png" type="image\/png" sizes="32x32">/,'PNG favicon link is missing');
+assert.match(html,/<link rel="shortcut icon" href="\/favicon\.ico">/,'ICO favicon link is missing');
+assert.match(html,/<link rel="apple-touch-icon" href="\/apple-touch-icon\.png" sizes="180x180">/,'Apple touch icon link is missing');
+assert.deepEqual([...fs.readFileSync('public/favicon-32x32.png').subarray(0,8)],[137,80,78,71,13,10,26,10]);
+assert.deepEqual([...fs.readFileSync('public/favicon.ico').subarray(0,4)],[0,0,1,0]);
 
 const pick=(name,next)=>script.slice(script.indexOf(`  ${name}`),script.indexOf(`  ${next}`,script.indexOf(`  ${name}`)));
 const code=pick("const UNIT_META=","function renderPrices");

@@ -5,7 +5,14 @@ export const metadata: Metadata = {
   title: 'Вдвоём',
   description: 'Личное пространство для двоих',
   manifest: '/manifest.webmanifest',
-  icons: { icon: '/favicon.svg', apple: '/apple-touch-icon.png' },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' }],
+  },
 };
 
 export const viewport: Viewport = {
