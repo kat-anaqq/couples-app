@@ -27,7 +27,7 @@ const validateStart=script.indexOf('  function validateState(');
 const validateEnd=script.indexOf('  async function importData',validateStart);
 const context={structuredClone,URL,uid:()=>`linked_${Math.random().toString(36).slice(2)}`,emptyState:()=>({version:1,names:['',''],wishes:[],shopping:[],tasks:[],movies:[],stores:[],products:[]}),safeUrl:value=>{try{return ['http:','https:'].includes(new URL(value).protocol)}catch{return false}}};
 vm.createContext(context);
-vm.runInContext(code+"const units=['шт.','г','кг','мл','л','уп.'],DATA_UNITS=units,DATA_UNIT_KIND={'шт.':'count','уп.':'pack','г':'weight','кг':'weight','мл':'volume','л':'volume'};"+script.slice(validateStart,validateEnd)+';globalThis.calculatePlan=calculatePlan;globalThis.syncProductToShopping=syncProductToShopping;globalThis.validateState=validateState;',context);
+vm.runInContext(code+"const units=['шт.','г','кг','мл','л','уп.'],DATA_UNITS=units,DATA_UNIT_KIND={'шт.':'count','уп.':'pack','г':'weight','кг':'weight','мл':'volume','л':'volume'};"+script.slice(validateStart,validateEnd)+';globalThis.calculatePlan=calculatePlan;globalThis.syncProductToShopping=syncProductToShopping;globalThis.ensureProductShoppingLinks=ensureProductShoppingLinks;globalThis.validateState=validateState;',context);
 const sampleStart=script.indexOf('  const sampleState=');
 const sampleEnd=script.indexOf('  let state=',sampleStart);
 vm.runInContext(script.slice(sampleStart,sampleEnd)+';globalThis.sampleState=sampleState;',context);
@@ -48,10 +48,22 @@ assert.equal(context.state.shopping.length,1);
 assert.equal(context.state.shopping[0].sourceProduct,'milk');
 assert.equal(context.state.shopping[0].store,'B');
 assert.equal(context.state.shopping[0].price,80);
+assert.equal(context.state.products[0].shoppingSynced,true);
+
+context.state={version:1,names:['Я','Ты'],wishes:[],shopping:[],tasks:[],movies:[],stores,products:[structuredClone(milk)]};
+assert.deepEqual(JSON.parse(JSON.stringify(context.ensureProductShoppingLinks())),{changed:true,added:1});
+assert.equal(context.state.shopping.length,1);
+assert.equal(context.state.products[0].shoppingSynced,true);
+context.state.shopping=[];
+assert.deepEqual(JSON.parse(JSON.stringify(context.ensureProductShoppingLinks())),{changed:false,added:0});
+assert.equal(context.state.shopping.length,0,'a manually deleted linked purchase must stay deleted');
 
 const base={version:1,names:['Я','Ты'],wishes:[],shopping:[],tasks:[],stores,products:[{...milk,prices:{a:100}}],movies:[{id:'m',title:'Фильм',done:true,contentType:'film',genre:'Драма',watchedDate:'',ratingMe:9,ratingPartner:8}]};
 const migrated=context.validateState(base);
 assert.deepEqual(JSON.parse(JSON.stringify(migrated.products[0].prices.a)),{price:100,size:1,unit:'л'});
+assert.equal(migrated.products[0].shoppingSynced,false);
+const alreadyLinked=context.validateState({...base,products:[{...base.products[0],shoppingSynced:true}]});
+assert.equal(alreadyLinked.products[0].shoppingSynced,true);
 assert.equal(migrated.movies[0].ratingMe,9);
 assert.throws(()=>context.validateState({...base,movies:[{...base.movies[0],ratingMe:11}]}));
 
@@ -69,4 +81,3 @@ let transferIndex=0;
 for(const group of context.calculatePlan(transferred).groups) for(const item of group.items) transferred.shopping.push({id:`transfer${++transferIndex}`,title:item.product.title,qty:1,unit:'шт.',price:item.total,store:group.store.name,category:'Продукты',done:false,sample:false,sourceProduct:item.product.id});
 assert.doesNotThrow(()=>context.validateState(transferred));
 console.log('app verification passed');
-
