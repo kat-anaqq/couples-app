@@ -17,14 +17,17 @@ assert.match(html,/prefers-reduced-motion:reduce[^}]*\{[^}]*animation:none!impor
 assert.match(script,/const motionAllowed=/,'motion preference helper is missing');
 assert.match(script,/classList\.add\('item-leave'\)/,'delete transition is missing');
 assert.match(script,/render\(true\)/,'animated view rendering is missing');
+assert.match(html,/\.sidebar\.open\{transform:translate3d\(0,0,0\) scale\(1\)/,'mobile sidebar flyout is missing');
+assert.match(html,/\.mobile-shade\.open\{[^}]*opacity:1/,'mobile sidebar shade transition is missing');
+assert.match(script,/function syncProductToShopping/,'comparison-to-shopping sync is missing');
 
 const pick=(name,next)=>script.slice(script.indexOf(`  ${name}`),script.indexOf(`  ${next}`,script.indexOf(`  ${name}`)));
 const code=pick("const UNIT_META=","function renderPrices");
 const validateStart=script.indexOf('  function validateState(');
 const validateEnd=script.indexOf('  async function importData',validateStart);
-const context={structuredClone,URL,emptyState:()=>({version:1,names:['',''],wishes:[],shopping:[],tasks:[],movies:[],stores:[],products:[]}),safeUrl:value=>{try{return ['http:','https:'].includes(new URL(value).protocol)}catch{return false}}};
+const context={structuredClone,URL,uid:()=>`linked_${Math.random().toString(36).slice(2)}`,emptyState:()=>({version:1,names:['',''],wishes:[],shopping:[],tasks:[],movies:[],stores:[],products:[]}),safeUrl:value=>{try{return ['http:','https:'].includes(new URL(value).protocol)}catch{return false}}};
 vm.createContext(context);
-vm.runInContext(code+"const units=['шт.','г','кг','мл','л','уп.'],DATA_UNITS=units,DATA_UNIT_KIND={'шт.':'count','уп.':'pack','г':'weight','кг':'weight','мл':'volume','л':'volume'};"+script.slice(validateStart,validateEnd)+';globalThis.calculatePlan=calculatePlan;globalThis.validateState=validateState;',context);
+vm.runInContext(code+"const units=['шт.','г','кг','мл','л','уп.'],DATA_UNITS=units,DATA_UNIT_KIND={'шт.':'count','уп.':'pack','г':'weight','кг':'weight','мл':'volume','л':'volume'};"+script.slice(validateStart,validateEnd)+';globalThis.calculatePlan=calculatePlan;globalThis.syncProductToShopping=syncProductToShopping;globalThis.validateState=validateState;',context);
 const sampleStart=script.indexOf('  const sampleState=');
 const sampleEnd=script.indexOf('  let state=',sampleStart);
 vm.runInContext(script.slice(sampleStart,sampleEnd)+';globalThis.sampleState=sampleState;',context);
@@ -36,6 +39,15 @@ const plan=context.calculatePlan({stores,products:[milk]});
 assert.equal(plan.groups[0].store.id,'b');
 assert.equal(plan.groups[0].items[0].unitPrice,80);
 assert.equal(plan.total,80);
+
+context.state={version:1,names:['Я','Ты'],wishes:[],shopping:[],tasks:[],movies:[],stores,products:[structuredClone(milk)]};
+assert.equal(context.syncProductToShopping('milk',false),false);
+assert.equal(context.state.shopping.length,0);
+assert.equal(context.syncProductToShopping('milk',true),true);
+assert.equal(context.state.shopping.length,1);
+assert.equal(context.state.shopping[0].sourceProduct,'milk');
+assert.equal(context.state.shopping[0].store,'B');
+assert.equal(context.state.shopping[0].price,80);
 
 const base={version:1,names:['Я','Ты'],wishes:[],shopping:[],tasks:[],stores,products:[{...milk,prices:{a:100}}],movies:[{id:'m',title:'Фильм',done:true,contentType:'film',genre:'Драма',watchedDate:'',ratingMe:9,ratingPartner:8}]};
 const migrated=context.validateState(base);
