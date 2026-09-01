@@ -7,6 +7,8 @@ const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 const script=scripts.at(-1)?.[1];
 assert(script,'inline script missing');
 new Function(script);
+for(const helper of ['field','select','owners']) assert.match(script,new RegExp(`const ${helper}=`),`${helper} helper missing`);
+assert.match(html,/\.empty>\.icon\{/,'empty-state icon selector must not resize the button icon');
 
 const pick=(name,next)=>script.slice(script.indexOf(`  ${name}`),script.indexOf(`  ${next}`,script.indexOf(`  ${name}`)));
 const code=pick("const UNIT_META=","function renderPrices");
