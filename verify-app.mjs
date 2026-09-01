@@ -11,6 +11,12 @@ for(const helper of ['field','select','owners']) assert.match(script,new RegExp(
 assert.match(html,/\.empty>\.icon\{/,'empty-state icon selector must not resize the button icon');
 assert.doesNotMatch(script,/prices:\['Где дешевле\?'/,'price comparison must not be a sidebar page');
 assert.match(script,/data-action="shopping-mode"/,'shopping mode switch is missing');
+assert.match(html,/@keyframes view-enter/,'page transition is missing');
+assert.match(html,/@keyframes dialog-in/,'dialog transition is missing');
+assert.match(html,/prefers-reduced-motion:reduce[^}]*\{[^}]*animation:none!important/,'reduced-motion override is missing');
+assert.match(script,/const motionAllowed=/,'motion preference helper is missing');
+assert.match(script,/classList\.add\('item-leave'\)/,'delete transition is missing');
+assert.match(script,/render\(true\)/,'animated view rendering is missing');
 
 const pick=(name,next)=>script.slice(script.indexOf(`  ${name}`),script.indexOf(`  ${next}`,script.indexOf(`  ${name}`)));
 const code=pick("const UNIT_META=","function renderPrices");
