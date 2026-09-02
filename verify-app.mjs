@@ -87,6 +87,21 @@ assert.match(
   /:root\[data-mobile-nav='bottom'\] \.mobile-bottom-nav/,
   'bottom navigation layout is missing',
 );
+assert.match(
+  css,
+  /right: max\(18px, calc\(env\(safe-area-inset-right\) \+ 10px\)\)/,
+  'bottom navigation must stay inside the iPhone safe area',
+);
+assert.match(
+  css,
+  /\.avatar\s*\{[\s\S]*?color: #5f586f/,
+  'first avatar needs an explicit contrasting text color',
+);
+assert.match(
+  script,
+  /settings:\s*'[^']*<circle cx="12" cy="12" r="3"\/>/,
+  'settings must use a gear icon',
+);
 assert.doesNotMatch(
   html,
   /id="theme-toggle"/,

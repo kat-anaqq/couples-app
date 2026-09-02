@@ -315,6 +315,7 @@ small {
   place-items: center;
   border: 2px solid var(--bg);
   background: #e8e4ee;
+  color: #5f586f;
   font-size: 12px;
   font-weight: 600;
   margin-left: -8px;
@@ -2658,16 +2659,19 @@ dialog {
   :root[data-mobile-nav='bottom'] .mobile-bottom-nav {
     position: fixed;
     z-index: 30;
-    right: max(10px, env(safe-area-inset-right));
-    bottom: max(8px, env(safe-area-inset-bottom));
-    left: max(10px, env(safe-area-inset-left));
+    right: max(18px, calc(env(safe-area-inset-right) + 10px));
+    bottom: max(10px, calc(env(safe-area-inset-bottom) + 6px));
+    left: max(18px, calc(env(safe-area-inset-left) + 10px));
+    width: auto;
+    max-width: 520px;
+    margin-inline: auto;
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 2px;
     min-height: 58px;
     padding: 5px;
     border: 1px solid var(--line);
-    border-radius: 18px;
+    border-radius: 17px;
     background: color-mix(in srgb, var(--paper) 94%, transparent);
     box-shadow: 0 10px 35px #302b241f;
     backdrop-filter: blur(16px);
