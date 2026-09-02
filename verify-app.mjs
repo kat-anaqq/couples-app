@@ -72,6 +72,27 @@ assert.match(
   'mobile sidebar shade transition is missing',
 );
 assert.match(
+  html,
+  /<nav[\s\S]*id="mobile-bottom-nav"[\s\S]*aria-label="Нижняя навигация"/,
+  'mobile bottom navigation container is missing',
+);
+assert.match(
+  script,
+  /document\.addEventListener\(\s*'pointermove'/,
+  'full-screen sidebar swipe gesture is missing',
+);
+assert.match(script, /function renderSettings\(/, 'settings page is missing');
+assert.match(
+  css,
+  /:root\[data-mobile-nav='bottom'\] \.mobile-bottom-nav/,
+  'bottom navigation layout is missing',
+);
+assert.doesNotMatch(
+  html,
+  /id="theme-toggle"/,
+  'theme switch must live in settings instead of the top bar',
+);
+assert.match(
   script,
   /function syncProductToShopping/,
   'comparison-to-shopping sync is missing',

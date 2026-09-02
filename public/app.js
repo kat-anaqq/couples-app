@@ -41,6 +41,7 @@ const ICONS = {
     '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/>',
   moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  dock: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18M7 18h.01M12 18h.01M17 18h.01"/>',
 };
 const icon = (name) =>
   `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.heart}</svg>`;
@@ -74,6 +75,16 @@ const dateLabel = (value) =>
         month: 'short',
       });
 const THEME_KEY = 'vdvoem.theme';
+const MOBILE_NAV_KEY = 'vdvoem.mobile-nav';
+let mobileNavMode = (() => {
+  try {
+    return localStorage.getItem(MOBILE_NAV_KEY) === 'bottom'
+      ? 'bottom'
+      : 'sidebar';
+  } catch {
+    return 'sidebar';
+  }
+})();
 function applyTheme(theme, persist = true) {
   const value = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.dataset.theme = value;
@@ -81,18 +92,28 @@ function applyTheme(theme, persist = true) {
     try {
       localStorage.setItem(THEME_KEY, value);
     } catch {}
-  const button = document.getElementById('theme-toggle');
-  if (button) {
-    const dark = value === 'dark';
-    button.innerHTML = icon(dark ? 'sun' : 'moon');
-    button.setAttribute(
-      'aria-label',
-      dark ? 'Включить светлую тему' : 'Включить тёмную тему',
-    );
-    button.title = dark ? 'Светлая тема' : 'Тёмная тема';
-  }
+  document.querySelectorAll('[data-theme-option]').forEach((button) => {
+    const selected = button.dataset.themeOption === value;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
   document.querySelector('meta[name="theme-color"]').content =
     value === 'dark' ? '#181a18' : '#f8f7f4';
+}
+function applyMobileNavMode(mode, persist = true) {
+  mobileNavMode = mode === 'bottom' ? 'bottom' : 'sidebar';
+  document.documentElement.dataset.mobileNav = mobileNavMode;
+  if (persist)
+    try {
+      localStorage.setItem(MOBILE_NAV_KEY, mobileNavMode);
+    } catch {}
+  closeMenu();
+  renderNav();
+  document.querySelectorAll('[data-mobile-nav-option]').forEach((button) => {
+    const selected = button.dataset.mobileNavOption === mobileNavMode;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
 }
 const STORE_KEY = 'vdvoem.app.v1';
 const DATA_UNITS = ['шт.', 'г', 'кг', 'мл', 'л', 'уп.'],
@@ -360,9 +381,14 @@ try {
   preserveCorrupt = true;
 }
 const initialPage = location.hash.slice(1);
-let current = ['home', 'wishes', 'shopping', 'tasks', 'movies'].includes(
-  initialPage,
-)
+let current = [
+  'home',
+  'wishes',
+  'shopping',
+  'tasks',
+  'movies',
+  'settings',
+].includes(initialPage)
   ? initialPage
   : initialPage === 'prices'
     ? 'shopping'
@@ -399,6 +425,7 @@ const pageInfo = {
   shopping: ['Покупки', 'bag'],
   tasks: ['Дела', 'checklist'],
   movies: ['Смотрим вместе', 'film'],
+  settings: ['Настройки', 'settings'],
 };
 const ownerLabel = (owner) =>
   owner === 'me'
@@ -686,17 +713,33 @@ function render(animate = false) {
       shopping: renderShopping,
       tasks: renderTasks,
       movies: renderMovies,
+      settings: renderSettings,
     }[current]() +
-    `${hasExamples() ? '<div class="demo-banner"><span>Для вдохновения добавили примеры. Названия и цены — демонстрационные.</span><button data-action="clear-examples">Удалить примеры</button></div>' : ''}<div class="bottom-note">${icon('heart')}Маленькие планы. Большое «мы».</div>`;
+    `${current !== 'settings' && hasExamples() ? '<div class="demo-banner"><span>Для вдохновения добавили примеры. Названия и цены — демонстрационные.</span><button data-action="clear-examples">Удалить примеры</button></div>' : ''}<div class="bottom-note">${icon('heart')}Маленькие планы. Большое «мы».</div>`;
   showStorageWarning();
   if (current === 'shopping' && shoppingMode === 'compare') updatePriceUI();
   if (animate) animateView();
 }
 function renderNav() {
   document.getElementById('nav').innerHTML = Object.entries(pageInfo)
+    .filter(([key]) => key !== 'settings')
     .map(
       ([key, [title, i]]) =>
         `<button data-action="nav" data-page="${key}" class="${current === key ? 'active' : ''}" ${current === key ? 'aria-current="page"' : ''}>${icon(i)}${title}${['wishes', 'shopping', 'tasks', 'movies'].includes(key) ? `<span class="count">${state[key].filter((x) => !x.done).length}</span>` : ''}</button>`,
+    )
+    .join('');
+  const settingsButton = document.getElementById('settings-button');
+  settingsButton.classList.toggle('active', current === 'settings');
+  settingsButton.setAttribute(
+    'aria-current',
+    current === 'settings' ? 'page' : 'false',
+  );
+  document.getElementById('mobile-bottom-nav').innerHTML = Object.entries(
+    pageInfo,
+  )
+    .map(
+      ([key, [title, i]]) =>
+        `<button data-action="nav" data-page="${key}" aria-label="${esc(title)}" title="${esc(title)}" class="${current === key ? 'active' : ''}" ${current === key ? 'aria-current="page"' : ''}>${icon(i)}</button>`,
     )
     .join('');
 }
@@ -1549,10 +1592,16 @@ function transferPlan() {
     `В покупках: добавлено ${added}${updated ? ', обновлено ' + updated : ''}. Откройте «Список покупок», чтобы увидеть распределение по магазинам.`,
   );
 }
-function openSettings() {
-  openModal(
-    'Наше пространство',
-    `<form id="names-form"><div class="form-grid">${field('first', 'Как зовут тебя?', state.names[0], 'text', 'required maxlength="30"')}${field('second', 'Как зовут твою пару?', state.names[1], 'text', 'required maxlength="30"')}</div><div class="form-actions"><button class="btn primary" type="submit">Сохранить имена</button></div></form><section class="settings-section"><h3>${CLOUD_MODE ? 'Общее пространство' : 'Данные остаются у вас'}</h3><p>${CLOUD_MODE ? 'Списки синхронизируются через защищённый сервер. Изменения появятся на втором телефоне в течение нескольких секунд.' : 'Приложение работает без интернета и аккаунтов. Всё хранится только в этом браузере.'}</p><p>Резервная копия пригодится на случай случайного удаления или для переноса данных.</p><div class="flex" style="flex-wrap:wrap"><button class="btn secondary small" data-action="export">${icon('download')}Скачать копию</button><button class="btn secondary small" data-action="import">${icon('upload')}Загрузить копию</button></div><input type="file" id="backup-input" accept="application/json,.json" class="hidden">${CLOUD_MODE ? '<button class="text-button" style="margin-top:12px" data-action="logout-cloud">Выйти на этом устройстве</button>' : ''}</section>${hasExamples() ? '<section class="settings-section"><h3>Начать со своего</h3><p>Удалим только нетронутые демонстрационные записи. Всё, что вы добавили или изменили, останется.</p><button class="btn secondary small" data-action="clear-examples">Удалить примеры</button></section>' : ''}`,
+function settingChoice(action, value, selected, iconName, title, description) {
+  const dataName = action === 'theme' ? 'theme-option' : 'mobile-nav-option';
+  return `<button type="button" class="setting-choice ${selected ? 'active' : ''}" data-action="${action}" data-value="${value}" data-${dataName}="${value}" aria-pressed="${selected}"><span class="setting-choice-icon">${icon(iconName)}</span><span><strong>${title}</strong><small>${description}</small></span></button>`;
+}
+function renderSettings() {
+  const theme =
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  return (
+    heading('Настройки', 'Имена, внешний вид, навигация и резервная копия.') +
+    `<div class="settings-page"><section class="settings-card"><div class="settings-card-head">${icon('heart')}<div><h2>Имена</h2><p>Так вы будете подписаны в общих списках.</p></div></div><form id="names-form"><div class="form-grid">${field('first', 'Как зовут тебя?', state.names[0], 'text', 'required maxlength="30"')}${field('second', 'Как зовут твою пару?', state.names[1], 'text', 'required maxlength="30"')}</div><div class="form-actions"><button class="btn primary" type="submit">Сохранить имена</button></div></form></section><section class="settings-card"><div class="settings-card-head">${icon('sun')}<div><h2>Оформление</h2><p>Тема применяется только на этом устройстве.</p></div></div><div class="setting-choices">${settingChoice('theme', 'light', theme === 'light', 'sun', 'Светлая', 'Спокойный светлый фон')}${settingChoice('theme', 'dark', theme === 'dark', 'moon', 'Тёмная', 'Мягкие тёмные оттенки')}</div></section><section class="settings-card settings-card-wide"><div class="settings-card-head">${icon('dock')}<div><h2>Навигация на телефоне</h2><p>Выберите удобный вариант отдельно на каждом устройстве.</p></div></div><div class="setting-choices navigation-choices">${settingChoice('mobile-nav', 'sidebar', mobileNavMode === 'sidebar', 'menu', 'Боковая панель', 'Открывается кнопкой или свайпом вправо в любом месте экрана')}${settingChoice('mobile-nav', 'bottom', mobileNavMode === 'bottom', 'dock', 'Нижняя панель', 'Только иконки внизу экрана')}</div></section><section class="settings-card settings-card-wide"><div class="settings-card-head">${icon('download')}<div><h2>${CLOUD_MODE ? 'Данные и синхронизация' : 'Данные остаются у вас'}</h2><p>${CLOUD_MODE ? 'Изменения появляются на втором телефоне в течение нескольких секунд.' : 'Всё хранится только в этом браузере.'}</p></div></div><p class="settings-copy">Резервная копия пригодится на случай случайного удаления или для переноса данных.</p><div class="flex settings-actions"><button class="btn secondary small" data-action="export">${icon('download')}Скачать копию</button><button class="btn secondary small" data-action="import">${icon('upload')}Загрузить копию</button></div><input type="file" id="backup-input" accept="application/json,.json" class="hidden">${CLOUD_MODE ? '<button class="text-button settings-logout" data-action="logout-cloud">Выйти на этом устройстве</button>' : ''}</section>${hasExamples() ? `<section class="settings-card settings-card-wide"><div class="settings-card-head">${icon('leaf')}<div><h2>Начать со своего</h2><p>Удалим только нетронутые демонстрационные записи.</p></div></div><button class="btn secondary small" data-action="clear-examples">Удалить примеры</button></section>` : ''}</div>`
   );
 }
 function exportData() {
@@ -1826,10 +1875,19 @@ function navigate(page) {
   render(true);
   window.scrollTo(0, 0);
 }
+function setMenuOpen(open) {
+  const allowed =
+    open &&
+    mobileNavMode === 'sidebar' &&
+    window.matchMedia('(max-width: 650px)').matches;
+  document.getElementById('sidebar').classList.toggle('open', allowed);
+  document.getElementById('mobile-shade').classList.toggle('open', allowed);
+  document
+    .getElementById('menu-button')
+    .setAttribute('aria-expanded', String(allowed));
+}
 function closeMenu() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('mobile-shade').classList.remove('open');
-  document.getElementById('menu-button').setAttribute('aria-expanded', 'false');
+  setMenuOpen(false);
 }
 document.addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
@@ -1885,11 +1943,24 @@ document.addEventListener('click', (event) => {
       closeModal();
       break;
     case 'settings':
-      openSettings();
+      navigate('settings');
       break;
     case 'theme':
-      applyTheme(
-        document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark',
+      applyTheme(button.dataset.value);
+      render();
+      notify(
+        button.dataset.value === 'dark'
+          ? 'Тёмная тема включена'
+          : 'Светлая тема включена',
+      );
+      break;
+    case 'mobile-nav':
+      applyMobileNavMode(button.dataset.value);
+      render();
+      notify(
+        button.dataset.value === 'bottom'
+          ? 'Нижняя навигация включена'
+          : 'Боковая навигация включена',
       );
       break;
     case 'clear-examples':
@@ -1940,7 +2011,6 @@ document.addEventListener('submit', (event) => {
     }
     state.names = names;
     save();
-    closeModal();
     render();
     if (current === 'shopping' && shoppingMode === 'compare') updatePriceUI();
     notify('Теперь это точно наше пространство');
@@ -2046,13 +2116,103 @@ document.addEventListener('change', (event) => {
     }
   }
 });
-document.getElementById('menu-button').onclick = () => {
-  const open = document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('mobile-shade').classList.toggle('open', open);
-  document
-    .getElementById('menu-button')
-    .setAttribute('aria-expanded', String(open));
-};
+let sidebarGesture = null;
+function mobileSidebarAvailable() {
+  return (
+    mobileNavMode === 'sidebar' &&
+    window.matchMedia('(max-width: 650px)').matches &&
+    !document.getElementById('modal').open
+  );
+}
+function clearSidebarGesture(shouldOpen) {
+  if (!sidebarGesture) return;
+  const sidebar = document.getElementById('sidebar'),
+    shade = document.getElementById('mobile-shade');
+  if (sidebarGesture.dragging) {
+    setMenuOpen(shouldOpen);
+    requestAnimationFrame(() => {
+      sidebar.classList.remove('dragging');
+      shade.classList.remove('dragging');
+      sidebar.style.removeProperty('--sidebar-drag-x');
+      shade.style.removeProperty('--shade-drag-opacity');
+    });
+  }
+  sidebarGesture = null;
+}
+document.addEventListener('pointerdown', (event) => {
+  if (!mobileSidebarAvailable() || !event.isPrimary || event.button !== 0)
+    return;
+  sidebarGesture = {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    startedAt: performance.now(),
+    initiallyOpen: document
+      .getElementById('sidebar')
+      .classList.contains('open'),
+    dragging: false,
+    progress: 0,
+  };
+});
+document.addEventListener('pointermove', (event) => {
+  if (!sidebarGesture || event.pointerId !== sidebarGesture.pointerId) return;
+  const dx = event.clientX - sidebarGesture.x,
+    dy = event.clientY - sidebarGesture.y;
+  if (!sidebarGesture.dragging) {
+    if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {
+      sidebarGesture = null;
+      return;
+    }
+    if (Math.abs(dx) < 10 || Math.abs(dx) <= Math.abs(dy) * 1.15) return;
+    if (
+      (!sidebarGesture.initiallyOpen && dx < 0) ||
+      (sidebarGesture.initiallyOpen && dx > 0)
+    ) {
+      sidebarGesture = null;
+      return;
+    }
+    sidebarGesture.dragging = true;
+  }
+  event.preventDefault();
+  const sidebar = document.getElementById('sidebar'),
+    shade = document.getElementById('mobile-shade'),
+    width = sidebar.getBoundingClientRect().width || 236,
+    translate = sidebarGesture.initiallyOpen
+      ? Math.max(-width, Math.min(0, dx))
+      : Math.max(-width, Math.min(0, -width + dx));
+  sidebarGesture.progress = 1 + translate / width;
+  sidebar.style.setProperty('--sidebar-drag-x', `${translate}px`);
+  shade.style.setProperty(
+    '--shade-drag-opacity',
+    String(sidebarGesture.progress),
+  );
+  sidebar.classList.add('dragging');
+  shade.classList.add('dragging');
+});
+document.addEventListener('pointerup', (event) => {
+  if (!sidebarGesture) return;
+  if (!sidebarGesture.dragging) {
+    sidebarGesture = null;
+    return;
+  }
+  const dx = event.clientX - sidebarGesture.x,
+    elapsed = Math.max(1, performance.now() - sidebarGesture.startedAt),
+    velocity = dx / elapsed,
+    shouldOpen = sidebarGesture.initiallyOpen
+      ? sidebarGesture.progress > 0.58 && velocity > -0.55
+      : sidebarGesture.progress > 0.42 || velocity > 0.55;
+  clearSidebarGesture(shouldOpen);
+});
+document.addEventListener('pointercancel', () => {
+  if (sidebarGesture)
+    clearSidebarGesture(
+      sidebarGesture.initiallyOpen
+        ? sidebarGesture.progress > 0.5
+        : sidebarGesture.progress >= 0.5,
+    );
+});
+document.getElementById('menu-button').onclick = () =>
+  setMenuOpen(!document.getElementById('sidebar').classList.contains('open'));
 document.getElementById('mobile-shade').onclick = closeMenu;
 document.getElementById('modal').addEventListener('cancel', (event) => {
   event.preventDefault();
@@ -2066,8 +2226,9 @@ document.getElementById('together-note').innerHTML =
   icon('leaf') +
   '<p>Счастье — в простых вещах.<br>Особенно когда они общие.</p>';
 document.getElementById('settings-button').innerHTML =
-  icon('settings') + 'Имена и резервная копия';
+  icon('settings') + 'Настройки';
 applyTheme(document.documentElement.dataset.theme || 'light', false);
+applyMobileNavMode(mobileNavMode, false);
 if (!CLOUD_MODE) {
   const migration = ensureProductShoppingLinks();
   if (migration.changed) save();

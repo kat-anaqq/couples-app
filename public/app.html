@@ -17,6 +17,8 @@
       try {
         document.documentElement.dataset.theme =
           localStorage.getItem('vdvoem.theme') || 'light';
+        document.documentElement.dataset.mobileNav =
+          localStorage.getItem('vdvoem.mobile-nav') || 'sidebar';
       } catch {}
     </script>
     <link rel="stylesheet" href="/app.css" />
@@ -46,6 +48,11 @@
         ></button>
       </div>
     </aside>
+    <nav
+      class="mobile-bottom-nav"
+      id="mobile-bottom-nav"
+      aria-label="Нижняя навигация"
+    ></nav>
     <main class="main">
       <header class="topbar">
         <div class="flex">
@@ -64,12 +71,6 @@
         </div>
         <div class="topbar-right">
           <span class="local-status" id="save-status">Сохранено в браузере</span
-          ><button
-            class="icon-btn theme-toggle"
-            data-action="theme"
-            id="theme-toggle"
-            aria-label="Включить тёмную тему"
-          ></button
           ><button
             class="avatars"
             data-action="settings"
