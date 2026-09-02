@@ -94,6 +94,11 @@ assert.match(
 );
 assert.match(
   css,
+  /bottom: max\(14px, calc\(env\(safe-area-inset-bottom\) - 16px\)\)/,
+  'bottom navigation needs a balanced visual offset on iPhone',
+);
+assert.match(
+  css,
   /\.avatar\s*\{[\s\S]*?color: #5f586f/,
   'first avatar needs an explicit contrasting text color',
 );
