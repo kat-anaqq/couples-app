@@ -8,7 +8,11 @@ assert.ok(code && hash, 'PAIR_CODE and PAIR_HASH are required');
 const request = (path, init = {}) => fetch(`${base}${path}`, init);
 
 let response = await request('/api/state');
-assert.equal(response.status, 401, 'state endpoint must reject visitors without the pair code');
+assert.equal(
+  response.status,
+  401,
+  'state endpoint must reject visitors without the pair code',
+);
 
 response = await request('/api/auth', {
   method: 'POST',
@@ -30,6 +34,17 @@ response = await request('/api/state', { headers });
 assert.equal(response.status, 200);
 const snapshot = await response.json();
 assert.equal(snapshot.state.version, 1);
+const etag = response.headers.get('etag');
+assert.ok(etag, 'state response must include an ETag');
+
+response = await request('/api/state', {
+  headers: { ...headers, 'if-none-match': etag },
+});
+assert.equal(
+  response.status,
+  304,
+  'unchanged state must avoid retransmitting the payload',
+);
 
 response = await request('/api/state', {
   method: 'PUT',
@@ -50,4 +65,6 @@ for (const path of ['/app.html', '/manifest.webmanifest', '/sw.js']) {
   assert.equal(response.status, 200, `${path} must be served`);
 }
 
-console.log('Smoke test passed: auth, shared state, conflict protection, and PWA files.');
+console.log(
+  'Smoke test passed: auth, shared state, conflict protection, and PWA files.',
+);
