@@ -34,6 +34,7 @@ input,
 select,
 textarea {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 button {
   cursor: pointer;
@@ -2718,6 +2719,13 @@ dialog {
   }
   .navigation-choices {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 460px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -17,6 +17,21 @@ assert.match(
   /<script src="\/app\.js" type="module"><\/script>/,
   'app script link is missing',
 );
+assert.match(
+  html,
+  /maximum-scale=1,user-scalable=no/,
+  'mobile viewport must prevent accidental page zoom',
+);
+assert.match(
+  css,
+  /touch-action: manipulation/,
+  'interactive controls must prevent double-tap zoom',
+);
+assert.match(
+  css,
+  /@media \(max-width: 460px\)[\s\S]*?input,[\s\S]*?font-size: 16px !important/,
+  'mobile form controls must not trigger iPhone focus zoom',
+);
 const scriptWithoutImport = script.replace(
   /^import\s*\{[\s\S]*?\}\s*from\s*'\.\/price-engine\.js';\s*/,
   '',
