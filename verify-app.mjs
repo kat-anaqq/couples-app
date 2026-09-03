@@ -28,6 +28,16 @@ assert.match(
   'interactive controls must prevent double-tap zoom',
 );
 assert.match(
+  script,
+  /event\.touches\.length > 1\) event\.preventDefault\(\)/,
+  'multi-touch pinch zoom prevention is missing',
+);
+assert.match(
+  script,
+  /\['gesturestart', 'gesturechange'\]/,
+  'iPhone gesture zoom prevention is missing',
+);
+assert.match(
   css,
   /@media \(max-width: 460px\)[\s\S]*?input,[\s\S]*?font-size: 16px !important/,
   'mobile form controls must not trigger iPhone focus zoom',

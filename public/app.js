@@ -2116,6 +2116,19 @@ document.addEventListener('change', (event) => {
     }
   }
 });
+document.addEventListener(
+  'touchmove',
+  (event) => {
+    if (event.touches.length > 1) event.preventDefault();
+  },
+  { passive: false },
+);
+for (const gestureEvent of ['gesturestart', 'gesturechange'])
+  document.addEventListener(
+    gestureEvent,
+    (event) => event.preventDefault(),
+    { passive: false },
+  );
 let sidebarGesture = null;
 function mobileSidebarAvailable() {
   return (

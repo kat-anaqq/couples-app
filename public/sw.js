@@ -1,4 +1,4 @@
-const CACHE = 'vdvoem-shell-v15';
+const CACHE = 'vdvoem-shell-v16';
 self.addEventListener('install', (event) =>
   event.waitUntil(
     caches
