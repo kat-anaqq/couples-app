@@ -2659,19 +2659,19 @@ dialog {
   :root[data-mobile-nav='bottom'] .mobile-bottom-nav {
     position: fixed;
     z-index: 30;
-    right: max(18px, calc(env(safe-area-inset-right) + 10px));
-    bottom: max(14px, calc(env(safe-area-inset-bottom) - 16px));
-    left: max(18px, calc(env(safe-area-inset-left) + 10px));
+    right: max(22px, calc(env(safe-area-inset-right) + 14px));
+    bottom: max(20px, calc(env(safe-area-inset-bottom) + 8px));
+    left: max(22px, calc(env(safe-area-inset-left) + 14px));
     width: auto;
     max-width: 520px;
     margin-inline: auto;
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 2px;
-    min-height: 58px;
-    padding: 5px;
+    min-height: 62px;
+    padding: 6px;
     border: 1px solid var(--line);
-    border-radius: 17px;
+    border-radius: 999px;
     background: color-mix(in srgb, var(--paper) 94%, transparent);
     box-shadow: 0 10px 35px #302b241f;
     backdrop-filter: blur(16px);
@@ -2681,9 +2681,9 @@ dialog {
     display: grid;
     place-items: center;
     min-width: 0;
-    min-height: 48px;
+    min-height: 50px;
     color: var(--muted);
-    border-radius: 13px;
+    border-radius: 999px;
   }
   .mobile-bottom-nav button.active {
     color: #bd644b;

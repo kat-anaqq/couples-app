@@ -89,13 +89,18 @@ assert.match(
 );
 assert.match(
   css,
-  /right: max\(18px, calc\(env\(safe-area-inset-right\) \+ 10px\)\)/,
+  /right: max\(22px, calc\(env\(safe-area-inset-right\) \+ 14px\)\)/,
   'bottom navigation must stay inside the iPhone safe area',
 );
 assert.match(
   css,
-  /bottom: max\(14px, calc\(env\(safe-area-inset-bottom\) - 16px\)\)/,
-  'bottom navigation needs a balanced visual offset on iPhone',
+  /bottom: max\(20px, calc\(env\(safe-area-inset-bottom\) \+ 8px\)\)/,
+  'bottom navigation must float above the iPhone home indicator',
+);
+assert.match(
+  css,
+  /\.mobile-bottom-nav\s*\{[\s\S]*?border-radius: 999px/,
+  'bottom navigation needs a floating pill shape',
 );
 assert.match(
   css,
